@@ -86,8 +86,7 @@
             v-model="settings.bg"
             class="w-full border border-gray-500 rounded px-2 py-3"
           >
-            <option value="blue">Blue</option>
-            <option value="red">Red</option>
+            <option v-for="color in colors" :key="color.value" :value="color.value">{{ color.name }}</option>
           </select>
         </div>
 
@@ -109,7 +108,7 @@
         <div
           @click="handleClick(x,y)"
           class="shape w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 border border-gray-800 m-piccolo cursor-pointer shadow"
-          :class="{ 'bg-blue-400':obj.bg == 'blue', 'bg-red-400':obj.bg == 'red', 'rounded-full':obj.shape == 'circle', 'rounded-none':obj.shape == 'square' }"
+          :class="classObject(obj)"
           v-for="(obj, y) in row"
           :key="y"
         ></div>
@@ -129,22 +128,60 @@ export default {
         y: 10,
         maxY: 20
       },
+      colors: [
+        {
+          name: "White",
+          value: "white"
+        },
+        {
+          name: "Gray",
+          value: "gray"
+        },
+        {
+          name: "Red",
+          value: "red"
+        },
+        {
+          name: "Orange",
+          value: "orange"
+        },
+        {
+          name: "Yellow",
+          value: "yellow"
+        },
+        {
+          name: "Green",
+          value: "green"
+        },
+        {
+          name: "Teal",
+          value: "teal"
+        },
+        {
+          name: "Blue",
+          value: "blue"
+        },
+        {
+          name: "Indigo",
+          value: "indigo"
+        },
+        {
+          name: "Purple",
+          value: "purple"
+        },
+        {
+          name: "Pink",
+          value: "pink"
+        },
+        {
+          name: "Black",
+          value: "black"
+        }
+      ],
       canvas: [],
       coords: {
         x: "",
         y: ""
-      },
-      shape: {
-        shape: "square",
-        bg: "blue"
-      },
-      colors: {
-        blue: "bg-blue-400",
-        red: "bg-red-400"
-      },
-      shapes: {
-        square: "rounded-none",
-        circle: "rounded-full"
       },
       settings: {
         shape: "circle",
@@ -156,6 +193,24 @@ export default {
     };
   },
   methods: {
+    classObject(obj) {
+      return {
+        "bg-gray-100": obj.bg === "white",
+        "bg-gray-900": obj.bg === "black",
+        "bg-gray-400": obj.bg === "gray",
+        "bg-red-400": obj.bg === "red",
+        "bg-orange-400": obj.bg === "orange",
+        "bg-yellow-400": obj.bg === "yellow",
+        "bg-green-400": obj.bg === "green",
+        "bg-teal-400": obj.bg === "teal",
+        "bg-blue-400": obj.bg === "blue",
+        "bg-indigo-400": obj.bg === "indigo",
+        "bg-purple-400": obj.bg === "purple",
+        "bg-pink-400": obj.bg === "pink",
+        "rounded-full": obj.shape === "circle",
+        "rounded-none": obj.shape === "square"
+      };
+    },
     handleClick(x, y) {
       this.coords.x = x;
       this.coords.y = y;
@@ -189,21 +244,25 @@ export default {
       this.canvas[x][y][this.settings.type] = this.settings[this.settings.type];
     },
     handleRow(x, y) {
+      const targetColor = this.canvas[x][y];
       this.handlePoint(x, y);
 
-      this.handleNextPoint(x, y + 1, "right");
-      this.handleNextPoint(x, y - 1, "left");
+      this.handleNextPoint(x, y + 1, "right", targetColor);
+      this.handleNextPoint(x, y - 1, "left", targetColor);
     },
     handleColumn(x, y) {
+      const targetColor = this.canvas[x][y];
       this.handlePoint(x, y);
 
-      this.handleNextPoint(x + 1, y, "up");
-      this.handleNextPoint(x - 1, y, "down");
+      this.handleNextPoint(x + 1, y, "up", targetColor);
+      this.handleNextPoint(x - 1, y, "down", targetColor);
     },
     handleFlood(x, y) {
       if (!this.pointExists(x, y)) {
         return;
       }
+
+      const targetColor = this.canvas[x][y];
 
       if (
         this.canvas[x][y][this.settings.type] ===
@@ -213,7 +272,7 @@ export default {
       }
 
       this.handlePoint(x, y);
-      this.handleFlodInQueue(x, y);
+      this.handleFlodInQueue(x, y, targetColor);
     },
     pointExists(x, y) {
       if (!this.canvas[x]) {
@@ -338,7 +397,7 @@ export default {
             id: this.generateId.next().value,
             coords: [x, y],
             shape: "square",
-            bg: "blue"
+            bg: "white"
           };
         }
       }
