@@ -57,7 +57,7 @@
           <select
             name="type"
             id="type"
-            v-model="settings.type"
+            v-model="type"
             class="w-full border border-gray-500 rounded px-2 py-3"
           >
             <option value="shape">Shape</option>
@@ -65,7 +65,7 @@
           </select>
         </div>
 
-        <div class="mb-4" v-if="settings.type === 'shape'">
+        <div class="mb-4" v-if="type === 'shape'">
           <label for="shape" class="block">Set shape</label>
           <select
             name="shape"
@@ -78,7 +78,7 @@
           </select>
         </div>
 
-        <div class="mb-4" v-if="settings.type === 'bg'">
+        <div class="mb-4" v-if="type === 'bg'">
           <label for="color" class="block">Set color</label>
           <select
             name="color"
@@ -186,9 +186,9 @@ export default {
       settings: {
         shape: "circle",
         bg: "red",
-        mode: "flood", // single|row|column|flood
-        type: "bg" // shape|bg
+        mode: "flood" // single|row|column|flood
       },
+      type: "bg", // shape|bg
       generateId: null
     };
   },
@@ -241,38 +241,59 @@ export default {
         return;
       }
 
-      this.canvas[x][y][this.settings.type] = this.settings[this.settings.type];
+      this.canvas[x][y][this.type] = this.realTypeValue;
     },
     handleRow(x, y) {
-      const targetColor = this.canvas[x][y];
+      const targetValue = this.canvas[x][y][this.type];
+
       this.handlePoint(x, y);
 
-      this.handleNextPoint(x, y + 1, "right", targetColor);
-      this.handleNextPoint(x, y - 1, "left", targetColor);
+      this.handleNextPoint(x, y + 1, "right", targetValue);
+      this.handleNextPoint(x, y - 1, "left", targetValue);
     },
     handleColumn(x, y) {
-      const targetColor = this.canvas[x][y];
+      const targetValue = this.canvas[x][y][this.type];
+
       this.handlePoint(x, y);
 
-      this.handleNextPoint(x + 1, y, "up", targetColor);
-      this.handleNextPoint(x - 1, y, "down", targetColor);
+      this.handleNextPoint(x + 1, y, "up", targetValue);
+      this.handleNextPoint(x - 1, y, "down", targetValue);
     },
-    handleFlood(x, y) {
+    handleNextPoint(x, y, direction, targetValue) {
       if (!this.pointExists(x, y)) {
         return;
       }
 
-      const targetColor = this.canvas[x][y];
+      const replacementValue = this.realTypeValue;
 
-      if (
-        this.canvas[x][y][this.settings.type] ===
-        this.settings[this.settings.type]
-      ) {
+      if (this.canvas[x][y][this.type] === replacementValue) {
+        return;
+      }
+
+      if (this.canvas[x][y][this.type] !== targetValue) {
+        return;
+      }
+
+      setTimeout(() => {
+        const { newX, newY } = this.getNewCoords(x, y, direction);
+        this.handlePoint(x, y);
+        this.handleNextPoint(newX, newY, direction, targetValue);
+      }, 150);
+    },
+    handleFlood(x, y) {
+      const targetValue = this.canvas[x][y][this.type];
+      const replacementValue = this.realTypeValue;
+
+      if (this.canvas[x][y][this.type] === replacementValue) {
+        return;
+      }
+
+      if (this.canvas[x][y][this.type] !== targetValue) {
         return;
       }
 
       this.handlePoint(x, y);
-      this.handleFlodInQueue(x, y, targetColor);
+      this.handleFlodInQueue(x, y, targetValue);
     },
     pointExists(x, y) {
       if (!this.canvas[x]) {
@@ -285,7 +306,7 @@ export default {
 
       return true;
     },
-    handleFlodInQueue(x, y) {
+    handleFlodInQueue(x, y, targetValue) {
       let queue = [];
 
       queue.push(this.canvas[x][y]);
@@ -300,8 +321,7 @@ export default {
 
         if (
           this.pointExists(coords.x, coords.y + 1) &&
-          this.canvas[coords.x][coords.y + 1][this.settings.type] !==
-            this.settings[this.settings.type]
+          this.canvas[coords.x][coords.y + 1][this.type] === targetValue
         ) {
           this.handlePoint(coords.x, coords.y + 1);
           queue.push(this.canvas[coords.x][coords.y + 1]);
@@ -309,8 +329,7 @@ export default {
 
         if (
           this.pointExists(coords.x, coords.y - 1) &&
-          this.canvas[coords.x][coords.y - 1][this.settings.type] !==
-            this.settings[this.settings.type]
+          this.canvas[coords.x][coords.y - 1][this.type] === targetValue
         ) {
           this.handlePoint(coords.x, coords.y - 1);
           queue.push(this.canvas[coords.x][coords.y - 1]);
@@ -318,8 +337,7 @@ export default {
 
         if (
           this.pointExists(coords.x + 1, coords.y) &&
-          this.canvas[coords.x + 1][coords.y][this.settings.type] !==
-            this.settings[this.settings.type]
+          this.canvas[coords.x + 1][coords.y][this.type] === targetValue
         ) {
           this.handlePoint(coords.x + 1, coords.y);
           queue.push(this.canvas[coords.x + 1][coords.y]);
@@ -327,32 +345,11 @@ export default {
 
         if (
           this.pointExists(coords.x - 1, coords.y) &&
-          this.canvas[coords.x - 1][coords.y][this.settings.type] !==
-            this.settings[this.settings.type]
+          this.canvas[coords.x - 1][coords.y][this.type] === targetValue
         ) {
           this.handlePoint(coords.x - 1, coords.y);
           queue.push(this.canvas[coords.x - 1][coords.y]);
         }
-      }
-    },
-    handleNextPoint(x, y, direction) {
-      if (!this.canvas[x]) {
-        return;
-      }
-
-      if (!this.canvas[x][y]) {
-        return;
-      }
-
-      if (
-        this.canvas[x][y][this.settings.type] !==
-        this.settings[this.settings.type]
-      ) {
-        setTimeout(() => {
-          const { newX, newY } = this.getNewCoords(x, y, direction);
-          this.handlePoint(x, y);
-          this.handleNextPoint(newX, newY, direction);
-        }, 150);
       }
     },
     getNewCoords(x, y, direction) {
@@ -410,6 +407,11 @@ export default {
   },
   mounted() {
     this.generateId = this.idGenerator();
+  },
+  computed: {
+    realTypeValue() {
+      return this.settings[this.type];
+    }
   }
 };
 </script>
