@@ -44,18 +44,6 @@
 
       <div v-if="canvas.length > 1">
         <div class="mb-4">
-          <!-- <label for="mode" class="block">Mode</label>
-          <select
-            name="mode"
-            id="mode"
-            v-model="settings.mode"
-            class="w-full border border-gray-500 rounded px-2 py-3"
-          >
-            <option value="single">Single</option>
-            <option value="row">Row</option>
-            <option value="column">Column</option>
-            <option value="flood">Flood</option>
-          </select> -->
           <div class="w-full h-12 flex">
             <div
               class="w-1/4 h-full border border-gray-500 border-r-0 flex justify-center items-center rounded-l cursor-pointer"
